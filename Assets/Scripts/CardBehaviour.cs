@@ -4,12 +4,14 @@ using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.Rendering;
 
 public class CardBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
     private Canvas canvas; // Use it to enable and disabel RayCast for all obj -> canvas.GetComponent<GraphicRaycaster>().enabled = false;
     private Image imageComponent; // Enabel disable Raycast for specific img -> imageComponent.raycastTarget = false;
     private RectTransform rectTransform;
+    public RectTransform cardSlot = null;
 
     //States
     public bool isDraging;
@@ -20,8 +22,14 @@ public class CardBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
     Vector2 targetPosition;
     public float followSpeed;
     public float maxSpeed;
-    public float rotationSpeed;
-    public float maxRotationAngle;
+    private Vector2 dragOffset;
+
+    //Events
+    [Header("Events")]
+    [HideInInspector] public UnityEvent<CardBehaviour> PointerEnterEvent;
+    [HideInInspector] public UnityEvent<CardBehaviour> PointerExitEvent;
+    [HideInInspector] public UnityEvent<CardBehaviour> BeginDragEvent;
+    [HideInInspector] public UnityEvent<CardBehaviour> EndDragEvent;
 
     void Start()
     {
@@ -29,7 +37,7 @@ public class CardBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
         canvas = GetComponentInParent<Canvas>();
         imageComponent = GetComponent<Image>();
         rectTransform = GetComponent<RectTransform>();
-        targetPosition = Vector3.zero;
+        targetPosition = new Vector2(0, 250);
     }
 
     void Update()
@@ -38,11 +46,12 @@ public class CardBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
         if (isDraging)
         {
             Vector2 mousePosition = Input.mousePosition / canvas.scaleFactor;
-            targetPosition = mousePosition;
+            targetPosition = mousePosition - dragOffset;
         }
         else
         {
-            targetPosition = Vector3.zero;
+            if(cardSlot != null)
+                targetPosition = cardSlot.anchoredPosition;
         }
 
         // Move a card twords target position
@@ -62,19 +71,30 @@ public class CardBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
     public void OnBeginDrag(PointerEventData eventData)
     {
         isDraging = true;
+        BeginDragEvent.Invoke(this);
+
+        dragOffset = eventData.position / canvas.scaleFactor - rectTransform.anchoredPosition;
     }
     public void OnDrag(PointerEventData eventData) { }
     public void OnEndDrag(PointerEventData eventData)
     {
         isDraging = false;
+        EndDragEvent.Invoke(this);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         isHovered = true;
+        PointerEnterEvent.Invoke(this);
     }
     public void OnPointerExit(PointerEventData eventData)
     {
         isHovered = false;
+        PointerExitEvent.Invoke(this);
+    }
+
+    public int GetCardSlotsSiblingIndex()
+    {
+        return cardSlot.transform.GetSiblingIndex();
     }
 }
