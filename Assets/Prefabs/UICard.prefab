@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8968961387604328208}
   - component: {fileID: 1544786572207032485}
   m_Layer: 5
-  m_Name: Card
+  m_Name: UICard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -90,10 +90,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394d4e5d80fcb954cbe075187c80df3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  canvas: {fileID: 0}
+  imageComponent: {fileID: 0}
+  rectTransform: {fileID: 0}
+  cardSlot: {fileID: 0}
+  freeCard: 0
   isDraging: 0
   isHovered: 0
   followSpeed: 12
   maxSpeed: 15
+  maxRotationAngle: 15
+  rotationSpeed: 10
+  PointerEnterEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  PointerExitEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  BeginDragEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  EndDragEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8968961387604328208
 MonoBehaviour:
   m_ObjectHideFlags: 0

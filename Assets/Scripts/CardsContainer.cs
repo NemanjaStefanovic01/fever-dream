@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CardsContainer : MonoBehaviour
 {
@@ -10,19 +11,21 @@ public class CardsContainer : MonoBehaviour
     [SerializeField] private float heightPaddingModifyer = 1.5f;
     RectTransform rectTransform;
     private float containerHeight;
-    public int numOfSlots;
-    private CardBehaviour hoveredCard;
-    private CardBehaviour dragedCard;
+    private UICardBehaviour hoveredCard;
+    private UICardBehaviour dragedCard;
     private bool isCrossing;
+    
+    public int numOfSlots;
+    public CardsVisualiser cardVisualiser;
 
     [Header("Slot Settings")]
     public GameObject cardSlotPrefab;
     public float slotWidth = 200f;
     public float slotHeight = 280f;
-    [SerializeField]private List<RectTransform> cardSlots = new List<RectTransform>();
+    [HideInInspector]public List<RectTransform> cardSlots = new List<RectTransform>();
 
     [Header("Card Settings")]
-    [SerializeField]private List<CardBehaviour> cards = new List<CardBehaviour>();
+    [HideInInspector]public List<UICardBehaviour> cards = new List<UICardBehaviour>();
 
     void Start()
     {
@@ -37,6 +40,10 @@ public class CardsContainer : MonoBehaviour
         SetSlotPositions(); // Set position of each slot based on container width
 
         CheckForCardSlotSwitch();
+
+        // Update the visualiser
+        cardVisualiser.SetHoveredCardsVisual(hoveredCard);
+        cardVisualiser.SetDragedCardsVisual(dragedCard);
     }
 
     private void SetContainerDim()
@@ -52,7 +59,7 @@ public class CardsContainer : MonoBehaviour
         {
             for(int i = 0; i <  cardSlots.Count; i++)
             {
-                float pos = -(cardSlots.Count/2 * 200) + 100 + i*200;
+                float pos = -(cardSlots.Count/2 * slotWidth) + (slotWidth/2) + i * slotWidth;
                 cardSlots[i].anchoredPosition = new Vector2(pos, 0);
             }
         }
@@ -60,22 +67,25 @@ public class CardsContainer : MonoBehaviour
         {
             for (int i = 0; i < cardSlots.Count; i++)
             {
-                float pos = -((cardSlots.Count - 1) * 100) + i * 200;
+                float pos = -((cardSlots.Count - 1) * (slotWidth / 2)) + i * slotWidth;
                 cardSlots[i].anchoredPosition = new Vector2(pos, 0);
             }
         }
     }
 
-    public void AddCard(CardBehaviour card)
+    public void AddCard(UICardBehaviour card)
     {
         card.PointerEnterEvent.AddListener(CardPointerEnter);
         card.PointerExitEvent.AddListener(CardPointerExit);
         card.BeginDragEvent.AddListener(BeginDrag);
         card.EndDragEvent.AddListener(EndDrag);
 
+        card.rectTransform.sizeDelta = new Vector2(slotWidth, slotHeight);
+
         cards.Add(card);
 
         card.transform.SetParent(this.transform);
+        card.freeCard = false;
 
         AddCardSlot();
         SetContainerDim();
@@ -95,7 +105,7 @@ public class CardsContainer : MonoBehaviour
     {
         GameObject slot = Instantiate(cardSlotPrefab, transform);
         RectTransform slotRect = slot.GetComponent<RectTransform>();
-        slotRect.sizeDelta = new Vector2(slotWidth, this.GetComponent<RectTransform>().sizeDelta.y);
+        slotRect.sizeDelta = new Vector2(slotWidth, slotHeight);
         cardSlots.Add(slotRect);
     }
 
@@ -149,22 +159,53 @@ public class CardsContainer : MonoBehaviour
         isCrossing = false;
     }
 
-    // Listener functions
-    private void CardPointerEnter(CardBehaviour card)
+    public void RemoveCardFromContainer(UICardBehaviour card)
     {
-        hoveredCard = card;
-    }
-    private void CardPointerExit(CardBehaviour card)
-    {
-        hoveredCard = null;
+        cards.Remove(card);
+        card.freeCard = true;
+
+        cardSlots.Remove(card.cardSlot);
+        
+        Destroy(card.cardSlot.gameObject);
+
+        dragedCard = null;
     }
 
-    private void BeginDrag(CardBehaviour card)
+    // Listener functions
+    private void CardPointerEnter(UICardBehaviour card)
+    {
+        hoveredCard = card;
+
+        cardVisualiser.SetDefaultDisplayOrder();
+        cardVisualiser.SetCardOriginalSiblingIndex(card);
+    }
+    private void CardPointerExit(UICardBehaviour card)
+    {
+        hoveredCard = null;
+
+        cardVisualiser.SetCardToOriginalSiblingIndex(card);
+    }
+
+    private void BeginDrag(UICardBehaviour card)
     {
         dragedCard = card;
+
+        foreach(UICardBehaviour cardBehaviour in cards)
+        {
+            if(cardBehaviour != card)
+                cardBehaviour.canvas.GetComponent<GraphicRaycaster>().enabled = false;
+        }
     }
-    private void EndDrag(CardBehaviour card)
+    private void EndDrag(UICardBehaviour card)
     {
         dragedCard = null;
+
+        foreach (UICardBehaviour cardBehaviour in cards)
+        {
+            if (cardBehaviour != card)
+                cardBehaviour.canvas.GetComponent<GraphicRaycaster>().enabled = true;
+        }
+
+        cardVisualiser.SetDefaultDisplayOrder();
     }
 }

@@ -3,14 +3,14 @@ using UnityEngine.EventSystems;
 
 public class CardAdder : MonoBehaviour, IPointerClickHandler
 {
-    private CardBehaviour cardBehaviour;
+    private UICardBehaviour cardBehaviour;
     private CardsContainer cardContainer;
 
     private bool added = false;
 
     private void Start()
     {
-        cardBehaviour = GetComponent<CardBehaviour>();
+        cardBehaviour = GetComponent<UICardBehaviour>();
         cardContainer = GameObject.Find("CardsContainer").GetComponent<CardsContainer>();
     }
 
